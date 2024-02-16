@@ -7,7 +7,7 @@ const dbNotes = require('../db/db.json');
 // GET request to get all notes saved in db.json
 router.get('/notes', (req, res) => {
     fs.readFile('db/db.json', 'utf8', (err, data) => {
-        if (err) throw err;
+        if (err) res.status(500).json(err);
         var notes = JSON.parse(data);
         res.json(notes);
     });
@@ -19,16 +19,32 @@ router.post('/notes', (req, res) => {
     const newNote = { title, text, id: uuid() };
 
     fs.readFile('db/db.json', 'utf8', (err, data) => {
-        if (err) throw err;
+        if (err) res.status(500).json(err);
         var notes = JSON.parse(data);
         // Push new notes to notes array
         notes.push(newNote);
 
         var jsonNotes = JSON.stringify(notes, '\t');
         fs.writeFile('db/db.json', jsonNotes, err => {
-            if (err) throw err;
-            res.json(newNote)
-            console.log('Note db file updated');
+            if (err) res.status(500).json(err);
+            res.json(newNote);
+        });
+    });
+});
+
+// BONUS: DELETE call to delete a note with specific id
+router.delete('/notes/:id', function (req, res) {
+    fs.readFile('db/db.json', 'utf8', (err, data) => {
+        if (err) res.status(500).json(err);
+        var notes = JSON.parse(data);
+        var deletedNote = notes.filter(note => note.id === req.params.id);
+        var deletedNoteIndex = notes.indexOf(deletedNote[0]);
+        notes.splice(deletedNoteIndex, 1);
+
+        var jsonNotes = JSON.stringify(notes, '\t');
+        fs.writeFile('db/db.json', jsonNotes, err => {
+            if (err) res.status(500).json(err);
+            res.json('Note is deleted');
         });
     });
 });
